@@ -1,0 +1,31 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model OnboardingRequest {
+  id                  Int      @id @default(autoincrement())
+  instituteName       String
+  appName             String
+  workloadType        String
+  targetEnvironment   String
+  osPreference        String
+  vCpu                String
+  ram                 String
+  publicFacing        String
+  dbEngine            String
+  storageSize         String
+  highAvailability    String
+  techContactName     String
+  techContactEmail    String
+  billingEmail        String
+  backupRetention     String
+  architectureDiagram String?  
+  createdAt           DateTime @default(now())
+}
