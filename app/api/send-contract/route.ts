@@ -51,6 +51,10 @@ export async function POST(request: Request) {
         billingEmail: formData.get('billingEmail') as string,
         backupRetention: formData.get('backupRetention') as string,
         architectureDiagram: savedFilePath,
+        
+        // NEW TRACKING DATES
+        receivedDate: formData.get('receivedDate') as string || null,
+        dateSentToSlt: formData.get('dateSentToSlt') as string || null,
       },
     });
 

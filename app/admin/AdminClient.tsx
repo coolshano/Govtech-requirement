@@ -2,9 +2,9 @@
 'use client';
 
 import { useState } from 'react';
-import { deleteOnboardingRequest } from './actions';
+import { deleteOnboardingRequest, updateTrackingDates } from './actions';
 
-// Define the shape of an onboarding request record
+// Define the shape of an onboarding request record, including tracking dates
 type RequestItem = {
   id: number;
   instituteName: string;
@@ -22,6 +22,8 @@ type RequestItem = {
   techContactEmail: string;
   billingEmail: string;
   backupRetention: string;
+  receivedDate: string | null;
+  dateSentToSlt: string | null;
   architectureDiagram: string | null;
   createdAt: Date;
 };
@@ -43,6 +45,14 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
       } else {
         alert("Failed to delete record.");
       }
+    }
+  };
+
+  // Date update handler
+  const handleDateChange = async (id: number, newReceivedDate: string, newDateSentToSlt: string) => {
+    const res = await updateTrackingDates(id, newReceivedDate, newDateSentToSlt);
+    if (!res.success) {
+      alert("Failed to update tracking dates.");
     }
   };
 
@@ -138,6 +148,8 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Compute</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Database</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Tech Contact</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Received Date</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Sent to SLT</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Submitted</th>
                       <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pr-6">Actions</th>
                     </tr>
@@ -145,7 +157,7 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                   <tbody className="divide-y divide-gray-200">
                     {filteredRequests.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-12 text-center text-gray-500 text-sm">
+                        <td colSpan={9} className="py-12 text-center text-gray-500 text-sm">
                           No matching onboarding requests found.
                         </td>
                       </tr>
@@ -188,7 +200,27 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                             </a>
                           </td>
 
-                          {/* Date */}
+                          {/* Received Date (Editable inline) */}
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <input 
+                              type="date"
+                              defaultValue={req.receivedDate || ''}
+                              onBlur={(e) => handleDateChange(req.id, e.target.value, req.dateSentToSlt || '')}
+                              className="border border-gray-300 rounded p-1 text-xs text-gray-900 bg-white focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                          </td>
+
+                          {/* Date Sent to SLT (Editable inline) */}
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <input 
+                              type="date"
+                              defaultValue={req.dateSentToSlt || ''}
+                              onBlur={(e) => handleDateChange(req.id, req.receivedDate || '', e.target.value)}
+                              className="border border-gray-300 rounded p-1 text-xs text-gray-900 bg-white focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                          </td>
+
+                          {/* System Created Date */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             {new Date(req.createdAt).toLocaleDateString()}
                           </td>

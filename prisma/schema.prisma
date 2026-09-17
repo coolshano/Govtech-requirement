@@ -26,6 +26,11 @@ model OnboardingRequest {
   techContactEmail    String
   billingEmail        String
   backupRetention     String
-  architectureDiagram String?  
+  architectureDiagram String?
+  
+  // NEW FIELDS
+  receivedDate        String?
+  dateSentToSlt       String?
+
   createdAt           DateTime @default(now())
 }
