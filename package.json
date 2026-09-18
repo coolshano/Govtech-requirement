@@ -1,23 +1,15 @@
 {
-  "scripts": {
-  "dev": "next dev",
-  "build": "prisma generate && prisma db push && next build",
-  "start": "next start"
-},
   "name": "lgc-onboarding",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma db push --accept-data-loss && next build",
     "start": "next start",
-    "lint": "eslint",
-    "postinstall": "prisma skills sync || exit 0"
+    "lint": "eslint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
-    "@libsql/client": "^0.18.0",
-    "@prisma/adapter-libsql": "^7.10.0",
     "@prisma/client": "^5.22.0",
     "next": "16.3.3",
     "react": "19.2.8",
