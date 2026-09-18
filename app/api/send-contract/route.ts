@@ -1,70 +1,89 @@
 // app/api/send-contract/route.ts
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-
-// Adjust this path if your lib folder is located somewhere else
-import prisma from '../../../lib/prisma'; 
+import prisma from '@/lib/prisma';
+import { writeFile } from 'fs/promises';
+import path from 'path';
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     
-    // 1. Extract the file
-    const file = formData.get('architectureDiagram') as File | null;
-    let savedFilePath = null;
+    // Extract text fields
+    const instituteName = formData.get('instituteName') as string;
+    const department = formData.get('department') as string;
+    const appName = formData.get('appName') as string;
+    const goLiveDate = formData.get('goLiveDate') as string;
+    const networkBandwidth = formData.get('networkBandwidth') as string;
+    const workloadType = formData.get('workloadType') as string;
+    const targetEnvironment = formData.get('targetEnvironment') as string;
+    const osPreference = formData.get('osPreference') as string;
+    const vCpu = formData.get('vCpu') as string;
+    const ram = formData.get('ram') as string;
+    const storageType = formData.get('storageType') as string;
+    const storageSize = formData.get('storageSize') as string;
+    const highAvailability = formData.get('highAvailability') as string;
+    const workloadCriticality = formData.get('workloadCriticality') as string;
+    const dbEngine = formData.get('dbEngine') as string;
+    const backupPolicy = formData.get('backupPolicy') as string;
+    const techContactName = formData.get('techContactName') as string;
+    const techContactEmail = formData.get('techContactEmail') as string;
+    const billingEmail = formData.get('billingEmail') as string;
+    const backupRetention = formData.get('backupRetention') as string;
+    const firewallRules = formData.get('firewallRules') as string;
+    const wafRequired = formData.get('wafRequired') as string;
+    const receivedDate = formData.get('receivedDate') as string;
+    const dateSentToSlt = formData.get('dateSentToSlt') as string;
 
-    // 2. Save the file to the local filesystem (public/uploads)
+    // Handle file upload if present
+    let diagramUrl: string | null = null;
+    const file = formData.get('architectureDiagram') as File | null;
+    
     if (file && file.size > 0) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       
-      // Create a unique filename to prevent overwrites
-      const uniqueName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-      const uploadDir = join(process.cwd(), 'public/uploads');
+      const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
+      const uploadDir = path.join(process.cwd(), 'public/uploads');
+      const filepath = path.join(uploadDir, filename);
       
-      // Ensure the directory exists
-      await mkdir(uploadDir, { recursive: true });
-      
-      const filePath = join(uploadDir, uniqueName);
-      await writeFile(filePath, buffer);
-      
-      savedFilePath = `/uploads/${uniqueName}`; // Path to store in DB
+      await writeFile(filepath, buffer);
+      diagramUrl = `/uploads/${filename}`;
     }
 
-    // 3. Save all data to SQLite using Prisma
-    const newRequest = await prisma.onboardingRequest.create({
+    // Save record to database
+    await prisma.onboardingRequest.create({
       data: {
-        instituteName: formData.get('instituteName') as string,
-        appName: formData.get('appName') as string,
-        workloadType: formData.get('workloadType') as string,
-        targetEnvironment: formData.get('targetEnvironment') as string,
-        osPreference: formData.get('osPreference') as string,
-        vCpu: formData.get('vCpu') as string,
-        ram: formData.get('ram') as string,
-        publicFacing: formData.get('publicFacing') as string,
-        dbEngine: formData.get('dbEngine') as string,
-        storageSize: formData.get('storageSize') as string,
-        highAvailability: formData.get('highAvailability') as string,
-        techContactName: formData.get('techContactName') as string,
-        techContactEmail: formData.get('techContactEmail') as string,
-        billingEmail: formData.get('billingEmail') as string,
-        backupRetention: formData.get('backupRetention') as string,
-        architectureDiagram: savedFilePath,
-        
-        // NEW TRACKING DATES
-        receivedDate: formData.get('receivedDate') as string || null,
-        dateSentToSlt: formData.get('dateSentToSlt') as string || null,
+        instituteName,
+        department,
+        appName,
+        goLiveDate,
+        networkBandwidth,
+        workloadType,
+        targetEnvironment,
+        osPreference,
+        vCpu,
+        ram,
+        storageType,
+        storageSize,
+        highAvailability,
+        workloadCriticality,
+        dbEngine,
+        backupPolicy,
+        techContactName,
+        techContactEmail,
+        billingEmail,
+        backupRetention,
+        firewallRules,
+        wafRequired,
+        receivedDate: receivedDate || null,
+        dateSentToSlt: dateSentToSlt || null,
+        architectureDiagram: diagramUrl,
       },
     });
 
-    // EMAIL DISABLED FOR TESTING
-    // console.log("Email would have been sent to:", formData.get('billingEmail'));
-
-    return NextResponse.json({ success: true, recordId: newRequest.id });
-  } catch (error: any) {
-    console.error("API Error:", error);
-    // This will send the exact error message back to the browser if it fails
-    return NextResponse.json({ success: false, error: error.message || "Failed to process request" }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Request saved successfully' });
+  } catch (error) {
+    console.error('Submission error:', error);
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -4,24 +4,31 @@
 import { useState } from 'react';
 import { deleteOnboardingRequest, updateTrackingDates } from './actions';
 
-// Define the shape of an onboarding request record, including tracking dates
+// Define the shape of an onboarding request record, including all pipeline sheet fields
 type RequestItem = {
   id: number;
   instituteName: string;
+  department: string | null;
   appName: string;
+  goLiveDate: string | null;
+  networkBandwidth: string | null;
   workloadType: string;
   targetEnvironment: string;
   osPreference: string;
   vCpu: string;
   ram: string;
-  publicFacing: string;
-  dbEngine: string;
+  storageType: string | null;
   storageSize: string;
   highAvailability: string;
+  workloadCriticality: string | null;
+  dbEngine: string;
+  backupPolicy: string | null;
   techContactName: string;
   techContactEmail: string;
   billingEmail: string;
   backupRetention: string;
+  firewallRules: string | null;
+  wafRequired: string | null;
   receivedDate: string | null;
   dateSentToSlt: string | null;
   architectureDiagram: string | null;
@@ -61,7 +68,8 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
     const matchesSearch = 
       req.instituteName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       req.appName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.techContactName.toLowerCase().includes(searchQuery.toLowerCase());
+      req.techContactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.department && req.department.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesEnv = envFilter === 'ALL' || req.targetEnvironment === envFilter;
     const matchesWorkload = workloadFilter === 'ALL' || req.workloadType === workloadFilter;
@@ -71,14 +79,14 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
 
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[95rem] mx-auto">
         
         {/* Header Section */}
         <div className="sm:flex sm:items-center sm:justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">GovTech NOC Dashboard</h1>
             <p className="mt-2 text-sm text-gray-700">
-              Manage and review LGC2+ tenant onboarding requests.
+              Manage and review LGC2+ tenant onboarding requests and pipeline infrastructure specifications.
             </p>
           </div>
           <div className="mt-4 sm:mt-0">
@@ -93,7 +101,7 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
           
           {/* Search Box */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Search Institute / App</label>
+            <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Search Institute / Dept / App</label>
             <input 
               type="text" 
               placeholder="Type to search..." 
@@ -143,21 +151,22 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                 <table className="min-w-full divide-y divide-gray-300 bg-white">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Institute & App</th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Environment</th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Compute</th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Database</th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Tech Contact</th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Received Date</th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Sent to SLT</th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Submitted</th>
-                      <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pr-6">Actions</th>
+                      <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider sm:pl-6">Institute & App</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">Timeline / Go-Live</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">Environment</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">Compute & Criticality</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">Database & Storage</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">Security & Firewall</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">Contacts</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">Received Date</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">Sent to SLT</th>
+                      <th scope="col" className="px-3 py-3.5 text-right text-xs font-semibold text-gray-900 uppercase tracking-wider sm:pr-6">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {filteredRequests.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="py-12 text-center text-gray-500 text-sm">
+                        <td colSpan={10} className="py-12 text-center text-gray-500 text-sm">
                           No matching onboarding requests found.
                         </td>
                       </tr>
@@ -168,10 +177,16 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                           {/* Institute & App Name */}
                           <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                             <div className="font-medium text-gray-900">{req.instituteName}</div>
-                            <div className="text-gray-500">{req.appName}</div>
-                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 mt-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                            <div className="text-gray-500 text-xs">{req.department || 'No Dept'} — {req.appName}</div>
+                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 mt-1 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                               {req.workloadType}
                             </span>
+                          </td>
+
+                          {/* Go-Live Date & Bandwidth */}
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <div className="text-gray-900 font-medium">{req.goLiveDate || 'TBD'}</div>
+                            <div className="text-xs text-gray-500">Bw: {req.networkBandwidth || 'Standard'}</div>
                           </td>
 
                           {/* Environment */}
@@ -180,16 +195,28 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                             <div className="text-xs">{req.publicFacing}</div>
                           </td>
 
-                          {/* Compute */}
+                          {/* Compute & Criticality */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             <div className="text-gray-900">{req.osPreference}</div>
                             <div className="text-xs">{req.vCpu} vCPU / {req.ram}GB RAM</div>
+                            <span className="inline-block mt-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+                              Crit: {req.workloadCriticality || 'N/A'}
+                            </span>
                           </td>
 
-                          {/* Database */}
+                          {/* Database & Storage */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             <div className="text-gray-900">{req.dbEngine}</div>
-                            <div className="text-xs">{req.storageSize}GB ({req.highAvailability === 'Yes' ? 'HA' : 'Standalone'})</div>
+                            <div className="text-xs">{req.storageSize}GB ({req.storageType || 'Block'} / {req.highAvailability === 'Yes' ? 'HA' : 'Standalone'})</div>
+                            <div className="text-[10px] text-gray-400 mt-0.5">Backup: {req.backupPolicy || req.backupRetention}</div>
+                          </td>
+
+                          {/* Security & Firewall */}
+                          <td className="px-3 py-4 text-sm text-gray-500 max-w-xs">
+                            <div className="text-xs font-semibold text-indigo-600">WAF: {req.wafRequired || 'Not Req'}</div>
+                            <div className="text-xs text-gray-700 truncate max-w-[200px]" title={req.firewallRules || ''}>
+                              FW: {req.firewallRules || 'None specified'}
+                            </div>
                           </td>
 
                           {/* Contacts */}
@@ -220,11 +247,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                             />
                           </td>
 
-                          {/* System Created Date */}
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {new Date(req.createdAt).toLocaleDateString()}
-                          </td>
-
                           {/* Actions: View Diagram & Delete */}
                           <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
                             {req.architectureDiagram && (
@@ -232,14 +254,14 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                                 href={req.architectureDiagram} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-2.5 py-1.5 rounded-md text-xs transition-colors"
+                                className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-2 py-1 rounded text-xs transition-colors"
                               >
-                                View Diagram
+                                Diagram
                               </a>
                             )}
                             <button
                               onClick={() => handleDelete(req.id, req.instituteName)}
-                              className="text-red-600 hover:text-red-900 bg-red-50 px-2.5 py-1.5 rounded-md text-xs transition-colors"
+                              className="text-red-600 hover:text-red-900 bg-red-50 px-2 py-1 rounded text-xs transition-colors"
                             >
                               Delete
                             </button>

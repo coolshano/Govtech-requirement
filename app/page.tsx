@@ -8,7 +8,10 @@ import { z } from "zod";
 
 const localOnboardingSchema = z.object({
   instituteName: z.string().min(2, "Institute Name is required"),
+  department: z.string().min(2, "Department / Business Unit is required"),
   appName: z.string().min(2, "Application Name is required"),
+  goLiveDate: z.string().min(1, "Project Go-Live Date is required"),
+  networkBandwidth: z.string().min(1, "Network Bandwidth requirement is required"),
   workloadType: z.string().min(1, "Please select a workload type"),
   
   targetEnvironment: z.string().min(1, "Please select an environment"),
@@ -18,16 +21,25 @@ const localOnboardingSchema = z.object({
   publicFacing: z.string().min(1, "Please select network connectivity"),
   
   dbEngine: z.string().min(1, "Please select a database engine"),
+  storageType: z.string().min(1, "Please select a storage type"),
   storageSize: z.string().min(1, "Storage size is required"),
   highAvailability: z.string().min(1, "Please select HA requirement"),
-  
+  workloadCriticality: z.string().min(1, "Please select workload criticality"),
+  backupPolicy: z.string().min(2, "Backup policy details required"),
+
   techContactName: z.string().min(2, "Name is required"),
   techContactEmail: z.string().email("Valid email is required"),
   billingEmail: z.string().email("Valid email is required"),
   backupRetention: z.string().min(1, "Please select backup retention"),
   
-  // New field for the file upload. 
-  // Using z.any() avoids Server-Side Rendering (SSR) issues with browser FileList objects.
+  // Security & Firewall Requirements
+  firewallRules: z.string().optional(),
+  wafRequired: z.string().min(1, "Please specify WAF requirement"),
+
+  // Tracking Dates
+  receivedDate: z.string().optional(),
+  dateSentToSlt: z.string().optional(),
+  
   architectureDiagram: z.any().optional(),
 });
 
@@ -42,7 +54,10 @@ export default function Home() {
     mode: "onSubmit",
     defaultValues: {
       instituteName: "",
+      department: "",
       appName: "",
+      goLiveDate: "",
+      networkBandwidth: "",
       workloadType: "",
       targetEnvironment: "",
       osPreference: "",
@@ -50,12 +65,19 @@ export default function Home() {
       ram: "",
       publicFacing: "",
       dbEngine: "",
+      storageType: "",
       storageSize: "",
       highAvailability: "",
+      workloadCriticality: "",
+      backupPolicy: "",
       techContactName: "",
       techContactEmail: "",
       billingEmail: "",
       backupRetention: "",
+      firewallRules: "",
+      wafRequired: "",
+      receivedDate: "",
+      dateSentToSlt: "",
     },
   });
 
@@ -64,21 +86,16 @@ export default function Home() {
     setStatusMessage("");
     
     try {
-      // 1. Create a new FormData object to handle the file + text fields
       const formData = new FormData();
       
-      // 2. Loop through all the data and append it to FormData
       Object.entries(data).forEach(([key, value]) => {
         if (key === 'architectureDiagram' && value && value.length > 0) {
-          // Append the actual file object
           formData.append(key, value[0]);
-        } else if (key !== 'architectureDiagram') {
-          // Append text values
+        } else if (key !== 'architectureDiagram' && value !== undefined && value !== null) {
           formData.append(key, value as string);
         }
       });
 
-      // 3. Send as FormData (Do NOT set Content-Type header; the browser sets it automatically with the boundary)
       const response = await fetch('/api/send-contract', {
         method: 'POST',
         body: formData, 
@@ -117,31 +134,52 @@ export default function Home() {
           <div className={sectionStyles}>
             <h2 className="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">1. General & App Info</h2>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Gov Institute Name</label>
-              <input {...form.register("instituteName")} className={inputStyles} placeholder="e.g., Ministry of Health" />
-              {form.formState.errors.instituteName && <p className="text-red-500 text-xs mt-1">{form.formState.errors.instituteName.message}</p>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Gov Institute Name</label>
+                <input {...form.register("instituteName")} className={inputStyles} placeholder="e.g., Ministry of Health" />
+                {form.formState.errors.instituteName && <p className="text-red-500 text-xs mt-1">{form.formState.errors.instituteName.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Business Unit / Department</label>
+                <input {...form.register("department")} className={inputStyles} placeholder="e.g., IT Division" />
+                {form.formState.errors.department && <p className="text-red-500 text-xs mt-1">{form.formState.errors.department.message}</p>}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Application Name</label>
-              <input {...form.register("appName")} className={inputStyles} placeholder="e.g., eChanneling Portal" />
-              {form.formState.errors.appName && <p className="text-red-500 text-xs mt-1">{form.formState.errors.appName.message}</p>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Application Name</label>
+                <input {...form.register("appName")} className={inputStyles} placeholder="e.g., eChanneling Portal" />
+                {form.formState.errors.appName && <p className="text-red-500 text-xs mt-1">{form.formState.errors.appName.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Project Timeline / Go-Live Date</label>
+                <input type="date" {...form.register("goLiveDate")} className={inputStyles} />
+                {form.formState.errors.goLiveDate && <p className="text-red-500 text-xs mt-1">{form.formState.errors.goLiveDate.message}</p>}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Workload Type</label>
-              <select {...form.register("workloadType")} className={inputStyles}>
-                <option value="">Select...</option>
-                <option value="New Deployment">New Deployment (Greenfield)</option>
-                <option value="Migration">Migration</option>
-                <option value="Modernization">Modernization</option>
-              </select>
-              {form.formState.errors.workloadType && <p className="text-red-500 text-xs mt-1">{form.formState.errors.workloadType.message}</p>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Workload Type</label>
+                <select {...form.register("workloadType")} className={inputStyles}>
+                  <option value="">Select...</option>
+                  <option value="New Deployment">New Deployment (Greenfield)</option>
+                  <option value="Migration">Migration</option>
+                  <option value="Modernization">Modernization</option>
+                </select>
+                {form.formState.errors.workloadType && <p className="text-red-500 text-xs mt-1">{form.formState.errors.workloadType.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Network Bandwidth Requirement</label>
+                <input {...form.register("networkBandwidth")} className={inputStyles} placeholder="e.g., 1 Gbps" />
+                {form.formState.errors.networkBandwidth && <p className="text-red-500 text-xs mt-1">{form.formState.errors.networkBandwidth.message}</p>}
+              </div>
             </div>
           </div>
 
-          {/* SECTION 2: Compute & Network */}
+          {/* SECTION 2: Compute & Network Sizing */}
           <div className={sectionStyles}>
             <h2 className="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">2. Compute & Network Sizing</h2>
             
@@ -168,7 +206,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Total vCPU</label>
                 <input type="number" {...form.register("vCpu")} className={inputStyles} placeholder="e.g., 4" />
@@ -178,6 +216,16 @@ export default function Home() {
                 <label className="block text-sm font-medium text-gray-700">Total RAM (GB)</label>
                 <input type="number" {...form.register("ram")} className={inputStyles} placeholder="e.g., 16" />
                 {form.formState.errors.ram && <p className="text-red-500 text-xs mt-1">{form.formState.errors.ram.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Workload Criticality</label>
+                <select {...form.register("workloadCriticality")} className={inputStyles}>
+                  <option value="">Select...</option>
+                  <option value="Small">Small</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+                {form.formState.errors.workloadCriticality && <p className="text-red-500 text-xs mt-1">{form.formState.errors.workloadCriticality.message}</p>}
               </div>
             </div>
 
@@ -197,39 +245,58 @@ export default function Home() {
           <div className={sectionStyles}>
             <h2 className="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">3. Database & Storage</h2>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Database Engine</label>
-              <select {...form.register("dbEngine")} className={inputStyles}>
-                <option value="">Select...</option>
-                <option value="PostgreSQL">PostgreSQL</option>
-                <option value="MySQL">MySQL</option>
-                <option value="Microsoft SQL Server">Microsoft SQL Server</option>
-                <option value="MongoDB">MongoDB</option>
-                <option value="None">No Database Required</option>
-              </select>
-              {form.formState.errors.dbEngine && <p className="text-red-500 text-xs mt-1">{form.formState.errors.dbEngine.message}</p>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Database Engine</label>
+                <select {...form.register("dbEngine")} className={inputStyles}>
+                  <option value="">Select...</option>
+                  <option value="PostgreSQL">PostgreSQL</option>
+                  <option value="MySQL">MySQL</option>
+                  <option value="Microsoft SQL Server">Microsoft SQL Server</option>
+                  <option value="MongoDB">MongoDB</option>
+                  <option value="None">No Database Required</option>
+                </select>
+                {form.formState.errors.dbEngine && <p className="text-red-500 text-xs mt-1">{form.formState.errors.dbEngine.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Storage Type</label>
+                <select {...form.register("storageType")} className={inputStyles}>
+                  <option value="">Select...</option>
+                  <option value="Block">Block</option>
+                  <option value="Object">Object</option>
+                  <option value="File">File</option>
+                </select>
+                {form.formState.errors.storageType && <p className="text-red-500 text-xs mt-1">{form.formState.errors.storageType.message}</p>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Initial Storage Size (GB)</label>
+                <input type="number" {...form.register("storageSize")} className={inputStyles} placeholder="e.g., 500" />
+                {form.formState.errors.storageSize && <p className="text-red-500 text-xs mt-1">{form.formState.errors.storageSize.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">High Availability Required?</label>
+                <select {...form.register("highAvailability")} className={inputStyles}>
+                  <option value="">Select...</option>
+                  <option value="Yes">Yes (Multi-AZ / Replication)</option>
+                  <option value="No">No (Standalone)</option>
+                </select>
+                {form.formState.errors.highAvailability && <p className="text-red-500 text-xs mt-1">{form.formState.errors.highAvailability.message}</p>}
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Initial Storage Size (GB)</label>
-              <input type="number" {...form.register("storageSize")} className={inputStyles} placeholder="e.g., 500" />
-              {form.formState.errors.storageSize && <p className="text-red-500 text-xs mt-1">{form.formState.errors.storageSize.message}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">High Availability Required?</label>
-              <select {...form.register("highAvailability")} className={inputStyles}>
-                <option value="">Select...</option>
-                <option value="Yes">Yes (Multi-AZ / Replication)</option>
-                <option value="No">No (Standalone)</option>
-              </select>
-              {form.formState.errors.highAvailability && <p className="text-red-500 text-xs mt-1">{form.formState.errors.highAvailability.message}</p>}
+              <label className="block text-sm font-medium text-gray-700">Backup Policy & Frequency</label>
+              <input {...form.register("backupPolicy")} className={inputStyles} placeholder="e.g., Daily incremental, Weekly full" />
+              {form.formState.errors.backupPolicy && <p className="text-red-500 text-xs mt-1">{form.formState.errors.backupPolicy.message}</p>}
             </div>
           </div>
 
-          {/* SECTION 4: Contacts & Finalize */}
+          {/* SECTION 4: Contacts & Security Rules */}
           <div className={sectionStyles}>
-            <h2 className="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">4. Contacts & Compliance</h2>
+            <h2 className="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">4. Contacts & Security Rules</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -250,15 +317,43 @@ export default function Home() {
               {form.formState.errors.billingEmail && <p className="text-red-500 text-xs mt-1">{form.formState.errors.billingEmail.message}</p>}
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Backup Retention Policy</label>
+                <select {...form.register("backupRetention")} className={inputStyles}>
+                  <option value="">Select...</option>
+                  <option value="7 Days">7 Days</option>
+                  <option value="14 Days">14 Days</option>
+                  <option value="30 Days">30 Days</option>
+                </select>
+                {form.formState.errors.backupRetention && <p className="text-red-500 text-xs mt-1">{form.formState.errors.backupRetention.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">WAF Requirement</label>
+                <select {...form.register("wafRequired")} className={inputStyles}>
+                  <option value="">Select...</option>
+                  <option value="Required">Required (Provide Domain Details)</option>
+                  <option value="Not Required">Not Required</option>
+                </select>
+                {form.formState.errors.wafRequired && <p className="text-red-500 text-xs mt-1">{form.formState.errors.wafRequired.message}</p>}
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Backup Retention Policy</label>
-              <select {...form.register("backupRetention")} className={inputStyles}>
-                <option value="">Select...</option>
-                <option value="7 Days">7 Days</option>
-                <option value="14 Days">14 Days</option>
-                <option value="30 Days">30 Days</option>
-              </select>
-              {form.formState.errors.backupRetention && <p className="text-red-500 text-xs mt-1">{form.formState.errors.backupRetention.message}</p>}
+              <label className="block text-sm font-medium text-gray-700">Firewall Rules / Port Requirements</label>
+              <textarea rows={3} {...form.register("firewallRules")} className={inputStyles} placeholder="e.g., Allow HTTP (TCP/80), HTTPS (TCP/443), SSH (TCP/22) from Public Internet" />
+            </div>
+
+            {/* Tracking Dates */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Received Date</label>
+                <input type="date" {...form.register("receivedDate")} className={inputStyles} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Date Sent to SLT</label>
+                <input type="date" {...form.register("dateSentToSlt")} className={inputStyles} />
+              </div>
             </div>
           </div>
 
@@ -278,14 +373,12 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Display general error message if validation fails on submit */}
           {Object.keys(form.formState.errors).length > 0 && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-md text-center">
               Please fix the errors above before submitting.
             </div>
           )}
 
-          {/* Submit Button */}
           <div className="pt-4 border-t border-gray-200">
             <button 
               type="submit" 

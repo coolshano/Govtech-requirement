@@ -1,7 +1,8 @@
 // prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -10,27 +11,45 @@ datasource db {
 }
 
 model OnboardingRequest {
-  id                  Int      @id @default(autoincrement())
-  instituteName       String
-  appName             String
-  workloadType        String
-  targetEnvironment   String
-  osPreference        String
-  vCpu                String
-  ram                 String
-  publicFacing        String
-  dbEngine            String
-  storageSize         String
-  highAvailability    String
-  techContactName     String
-  techContactEmail    String
-  billingEmail        String
-  backupRetention     String
-  architectureDiagram String?
+  id                    Int      @id @default(autoincrement())
   
-  // NEW FIELDS
-  receivedDate        String?
-  dateSentToSlt       String?
+  // Project Metadata
+  instituteName         String
+  department            String?  // NEW
+  appName               String
+  goLiveDate            String?  // NEW
+  networkBandwidth      String?  // NEW
+  
+  // Workload & Compute Sizing
+  workloadType          String
+  targetEnvironment     String
+  osPreference          String
+  vCpu                  String
+  ram                   String
+  storageType           String?  // NEW (Block, Object, File)
+  storageSize           String
+  highAvailability      String
+  workloadCriticality   String?  // NEW (Small, Medium, High)
+  
+  // Database & Backup
+  dbEngine              String
+  backupPolicy          String?  // NEW
+  
+  // Contacts & Compliance
+  techContactName       String
+  techContactEmail      String
+  billingEmail          String
+  backupRetention       String
+  
+  // Security & Rules (Firewall / WAF)
+  firewallRules         String?  // NEW (JSON or text summary)
+  wafRequired           String?  // NEW (Yes/No & Domains)
+  
+  architectureDiagram   String?
+  
+  // Tracking Dates
+  receivedDate          String?
+  dateSentToSlt         String?
 
-  createdAt           DateTime @default(now())
+  createdAt             DateTime @default(now())
 }
