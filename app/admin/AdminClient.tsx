@@ -1,10 +1,9 @@
-// app/admin/page.tsx
+// app/admin/page.tsx (or AdminClient.tsx)
 'use client';
 
 import { useState } from 'react';
 import { deleteOnboardingRequest, updateTrackingDates } from './actions';
 
-// Define the shape of an onboarding request record, including all pipeline sheet fields
 type RequestItem = {
   id: number;
   instituteName: string;
@@ -38,12 +37,10 @@ type RequestItem = {
 export default function AdminDashboard({ initialRequests }: { initialRequests: RequestItem[] }) {
   const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
   
-  // Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [envFilter, setEnvFilter] = useState('ALL');
   const [workloadFilter, setWorkloadFilter] = useState('ALL');
 
-  // Delete handler
   const handleDelete = async (id: number, instituteName: string) => {
     if (window.confirm(`Are you sure you want to delete the onboarding request for "${instituteName}"?`)) {
       const res = await deleteOnboardingRequest(id);
@@ -55,7 +52,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
     }
   };
 
-  // Date update handler
   const handleDateChange = async (id: number, newReceivedDate: string, newDateSentToSlt: string) => {
     const res = await updateTrackingDates(id, newReceivedDate, newDateSentToSlt);
     if (!res.success) {
@@ -63,7 +59,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
     }
   };
 
-  // Filter logic
   const filteredRequests = requests.filter((req) => {
     const matchesSearch = 
       req.instituteName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -81,7 +76,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
     <main className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[95rem] mx-auto">
         
-        {/* Header Section */}
         <div className="sm:flex sm:items-center sm:justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">GovTech NOC Dashboard</h1>
@@ -96,10 +90,7 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
           </div>
         </div>
 
-        {/* SEARCH & FILTER CONTROLS BAR */}
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          {/* Search Box */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Search Institute / Dept / App</label>
             <input 
@@ -111,7 +102,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
             />
           </div>
 
-          {/* Environment Filter */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Filter by Environment</label>
             <select 
@@ -126,7 +116,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
             </select>
           </div>
 
-          {/* Workload Type Filter */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Filter by Workload</label>
             <select 
@@ -140,10 +129,8 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
               <option value="Modernization">Modernization</option>
             </select>
           </div>
-
         </div>
 
-        {/* Data Table */}
         <div className="mt-4 flow-root">
           <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
@@ -174,7 +161,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                       filteredRequests.map((req) => (
                         <tr key={req.id} className="hover:bg-gray-50">
                           
-                          {/* Institute & App Name */}
                           <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                             <div className="font-medium text-gray-900">{req.instituteName}</div>
                             <div className="text-gray-500 text-xs">{req.department || 'No Dept'} — {req.appName}</div>
@@ -183,19 +169,16 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                             </span>
                           </td>
 
-                          {/* Go-Live Date & Bandwidth */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             <div className="text-gray-900 font-medium">{req.goLiveDate || 'TBD'}</div>
                             <div className="text-xs text-gray-500">Bw: {req.networkBandwidth || 'Standard'}</div>
                           </td>
 
-                          {/* Environment */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             <div className="text-gray-900 font-medium">{req.targetEnvironment}</div>
-                            <div className="text-xs">{req.publicFacing}</div>
+                            <div className="text-xs text-gray-500">{req.workloadType}</div>
                           </td>
 
-                          {/* Compute & Criticality */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             <div className="text-gray-900">{req.osPreference}</div>
                             <div className="text-xs">{req.vCpu} vCPU / {req.ram}GB RAM</div>
@@ -204,14 +187,12 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                             </span>
                           </td>
 
-                          {/* Database & Storage */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             <div className="text-gray-900">{req.dbEngine}</div>
                             <div className="text-xs">{req.storageSize}GB ({req.storageType || 'Block'} / {req.highAvailability === 'Yes' ? 'HA' : 'Standalone'})</div>
                             <div className="text-[10px] text-gray-400 mt-0.5">Backup: {req.backupPolicy || req.backupRetention}</div>
                           </td>
 
-                          {/* Security & Firewall */}
                           <td className="px-3 py-4 text-sm text-gray-500 max-w-xs">
                             <div className="text-xs font-semibold text-indigo-600">WAF: {req.wafRequired || 'Not Req'}</div>
                             <div className="text-xs text-gray-700 truncate max-w-[200px]" title={req.firewallRules || ''}>
@@ -219,7 +200,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                             </div>
                           </td>
 
-                          {/* Contacts */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             <div className="text-gray-900">{req.techContactName}</div>
                             <a href={`mailto:${req.techContactEmail}`} className="text-indigo-600 hover:text-indigo-900 text-xs">
@@ -227,7 +207,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                             </a>
                           </td>
 
-                          {/* Received Date (Editable inline) */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             <input 
                               type="date"
@@ -237,7 +216,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                             />
                           </td>
 
-                          {/* Date Sent to SLT (Editable inline) */}
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             <input 
                               type="date"
@@ -247,7 +225,6 @@ export default function AdminDashboard({ initialRequests }: { initialRequests: R
                             />
                           </td>
 
-                          {/* Actions: View Diagram & Delete */}
                           <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
                             {req.architectureDiagram && (
                               <a 
