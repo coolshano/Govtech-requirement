@@ -1,8 +1,6 @@
 // app/api/send-contract/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { writeFile } from 'fs/promises';
-import path from 'path';
 
 export async function POST(request: Request) {
   try {
@@ -34,21 +32,9 @@ export async function POST(request: Request) {
     const receivedDate = formData.get('receivedDate') as string;
     const dateSentToSlt = formData.get('dateSentToSlt') as string;
 
-    // Handle file upload if present
-    let diagramUrl: string | null = null;
+    // Handle file upload by capturing the filename securely as text
     const file = formData.get('architectureDiagram') as File | null;
-    
-    if (file && file.size > 0) {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      
-      const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-      const uploadDir = path.join(process.cwd(), 'public/uploads');
-      const filepath = path.join(uploadDir, filename);
-      
-      await writeFile(filepath, buffer);
-      diagramUrl = `/uploads/${filename}`;
-    }
+    const diagramFilename = (file && file.size > 0 && file.name) ? file.name : null;
 
     // Save record to database
     await prisma.onboardingRequest.create({
@@ -77,7 +63,7 @@ export async function POST(request: Request) {
         wafRequired,
         receivedDate: receivedDate || null,
         dateSentToSlt: dateSentToSlt || null,
-        architectureDiagram: diagramUrl,
+        architectureDiagram: diagramFilename,
       },
     });
 
