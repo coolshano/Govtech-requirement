@@ -101,11 +101,13 @@ export default function Home() {
         body: formData, 
       });
 
-      if (response.ok) {
-        setStatusMessage("Success! Requirements captured and contract emailed.");
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setStatusMessage("Success! Tenant onboarding request saved to database.");
         form.reset();
       } else {
-        setStatusMessage("Failed to send email. Check API configuration.");
+        setStatusMessage(`Failed to save: ${result.error || 'Unknown error'}`);
       }
     } catch (error) {
       setStatusMessage("An error occurred during submission.");
@@ -385,7 +387,7 @@ export default function Home() {
               disabled={isSubmitting}
               className="w-full py-4 px-6 border border-transparent rounded-lg shadow-md text-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
-              {isSubmitting ? "Processing..." : "Submit to NOC & Send Contract"}
+              {isSubmitting ? "Processing..." : "Submit to NOC & Save"}
             </button>
           </div>
 
